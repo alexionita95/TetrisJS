@@ -261,6 +261,31 @@ function drawBoard()
 			}
 		}
 }
+function colidesRight(piece,x,y)
+{
+	var xtop=findTop(piece);
+	var bottom=findBottom(piece);
+	var left =findLeft(piece);
+	var right=findRight(piece);
+	var checkCol= x+(right-left)+1;
+	var currentChecked=right;
+	if(checkCol < COLS && checkCol >=0)
+	{
+		do{
+		var YOffset=0;
+		for(i = xtop; i<=bottom;i++)
+		{
+			if(board[y+YOffset][checkCol] > 0 && piece[i][currentChecked]>0)
+					return true;
+			YOffset++;
+		}
+		currentChecked--;
+		checkCol--;
+		}
+		while(currentChecked >=left && checkCol >=0)
+	}
+	return false;
+}
 function colidesLeft(piece,x,y)
 {
 	var xtop=findTop(piece);
@@ -322,7 +347,7 @@ function moveLeft()
 function moveRight()
 {
 	var pieceWidth=findRight(currentPiece)-findLeft(currentPiece) + 1;
-	if(currentX + pieceWidth < COLS)
+	if(currentX + pieceWidth < COLS && !colidesRight(currentPiece,currentX,currentY))
 	{
 		currentX++;
 	}
