@@ -1,7 +1,36 @@
-<body>
+<style>
+</style>
+<body bgcolor="black">
 <center>
-<canvas id="canvas" width=200 height=400>
+<table border=0>
+<tr>
+<td>
+<center>
+<p color="white"><font color="white" id="score">Score: </font></p>
+<canvas id="canvas" width=200 height=400 style="border: 2px solid #DDDDDD">
 </canvas>
+</center>
+</td>
+<td>
+<center>
+<p><font color="white" id="score">Next</font></p>
+<canvas id="next" width=100 height=100 style="border: 2px solid #DDDDDD">
+</canvas>
+</center>
+</td>
+<tr>
+<td>
+<center>
+<p><font color="white" id="score">Move using Arrow Keys <br>(Up=Rotate)</font></p>
+<button onclick="rotatePiece()">Rotate</button>
+<button onclick="moveLeft()">Left</button>
+<button onclick="moveRight()">Right</button>
+<button onclick="movePiece()">Down</button>
+</center>
+</td>
+<td>
+</td>
+</table>
 </center>
 <script src="game.js"></script>
 </body>

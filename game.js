@@ -3,10 +3,10 @@ const context = canvas.getContext('2d');
 const rectWidth=20;
 const ROWS=20;
 const COLS=10;
-//const BORDER="#FFFFFF";
-//const BOARD="#000000";
-const BORDER="#000000";
-const BOARD="#AAAAAA";
+const BORDER="#DDDDDD";
+const BOARD="#000000";
+//const BORDER="#000000";
+//const BOARD="#AAAAAA";
 const O = [
 [0,1,1,0],
 [0,1,1,0],
@@ -62,6 +62,37 @@ const T = [
 var currentX=0;
 var currentY=0;
 var currentPiece=L;
+var nextPiece = L;
+var score=0;
+var running = true;
+
+var rotateMatrix = function(matrix) {
+ // reverse the rows
+  matrix = matrix.reverse();
+  
+  // swap the symmetric elements
+  for (var i = 0; i < matrix.length; i++) {
+    for (var j = 0; j < i; j++) {
+      var temp = matrix[i][j];
+      matrix[i][j] = matrix[j][i];
+      matrix[j][i] = temp;
+    }
+  }
+  update();
+};
+
+function copyPiece(piece)
+{
+	var result =[];
+	for(i=0;i<4;i++)
+	{
+		result[i]=[];
+		for(j=0;j<4;j++)
+			result[i][j]=piece[i][j];
+	}
+	return result;
+}
+
 function getRandomPiece()
 {
 	var value=Math.floor((Math.random() * 7) + 1);
@@ -177,7 +208,7 @@ function findRight(piece)
 return 0;
 }
 
-function drawPiece(x,y,piece)
+function drawPiece(ctx,x,y,piece)
 {
 	var xtop=findTop(piece);
 	var bottom=findBottom(piece);
@@ -191,7 +222,7 @@ function drawPiece(x,y,piece)
 			if(piece[i][j]>0)
 			{
 				color = getColorFromValue(piece[i][j]);
-				drawSquare(currentX,currentY,BORDER,color);
+				drawSquare(ctx,currentX,currentY,BORDER,color);
 			}
 			currentX=currentX+1;
 			}
@@ -199,13 +230,13 @@ function drawPiece(x,y,piece)
 			currentX=x;
 	}
 }
-function drawSquare(x,y,borderColor,backgroundColor)
+function drawSquare(ctx, x,y,borderColor,backgroundColor)
 {
-	context.fillStyle = backgroundColor;
-	context.fillRect(x*rectWidth,y*rectWidth,rectWidth,rectWidth);
-	context.strokeStyle=borderColor;
-	context.lineWidth = 1;
-	context.strokeRect(x*rectWidth,y*rectWidth, rectWidth, rectWidth);
+	ctx.fillStyle = backgroundColor;
+	ctx.fillRect(x*rectWidth,y*rectWidth,rectWidth,rectWidth);
+	ctx.strokeStyle=borderColor;
+	ctx.lineWidth = 1;
+	ctx.strokeRect(x*rectWidth,y*rectWidth, rectWidth, rectWidth);
 }
 var board =[];
 function initBoard()
@@ -225,15 +256,20 @@ function addPieceToBoard(piece)
 	var right=findRight(piece);
 	var XOffset=0;
 	var YOffset=0;
+	if(currentY < 0)
+	{
+		running = false;
+		return;
+	}
 	for(i=xtop;i<=bottom;i++)
 	{
 		for(j=left;j<=right;j++)
 		{
-			if(((currentX + XOffset) < COLS) && ((currentY + YOffset) < ROWS))
+			if(((currentX + XOffset) < COLS) && ((currentY + YOffset) < ROWS) && currentY >= 0)
 			{
 				if(piece[i][j]>0)
 				{
-				board[currentY+YOffset][currentX+XOffset]=piece[i][j];
+					board[currentY+YOffset][currentX+XOffset]=piece[i][j];
 				}
 			}
 			XOffset++;
@@ -243,21 +279,69 @@ function addPieceToBoard(piece)
 	}
 	console.log(board);
 }
+function removeFullLines()
+{
+	var row=ROWS-1;
+	do{
+		console.log("Caut");
+		if(isFullLine(row))
+		{
+			removeFullLine(row);
+		}
+		row--;
+	}while(row>=0)
+}
+function removeFullLine(index)
+{
+	for(k=index;k>=1;k--)
+		for(l=0;l<COLS;l++)
+		{
+			board[k][l] = board[k-1][l];
+		}
+}
+function isFullLine(index)
+{
+	for(i=0;i<COLS;i++)
+		if(board[index][i]==0)
+			return false;
+	console.log("true");
+	return true;
+}
+function hasFullLines()
+{
+	var row=ROWS-1;
+	do{
+		console.log("Caut");
+		if(isFullLine(row))
+		{
+			return true;
+		}
+		row--;
+	}while(row>=0)
+	return false;
+}
+	
 function drawBoard()
 {
-	//context.fillStyle = "#000000";
-	//context.fillRect(0,0,200,400);
+	context.fillStyle = "#FFFFFF";
+	context.fillRect(0,0,200,400);
+	context.fillStyle = BOARD;
+	context.globalAlpha = 0.3;
+	context.fillRect(0,0,200,400);
+	context.globalAlpha = 1;
 	for(i=0;i<ROWS;i++)
 		for(j=0;j<COLS;j++)
 		{
 			if(board[i][j]==0)
 			{
-				drawSquare(j, i,BORDER,BOARD);
+				context.globalAlpha = 0.3;
+				drawSquare(context,j, i,BORDER,BOARD);
+				context.globalAlpha = 1.0;
 			}
 			else
 			{
 				color = getColorFromValue(board[i][j]);
-				drawSquare(j, i,BORDER,color);
+				drawSquare(context,j, i,BORDER,color);
 			}
 		}
 }
@@ -275,9 +359,12 @@ function colidesRight(piece,x,y)
 		var YOffset=0;
 		for(i = xtop; i<=bottom;i++)
 		{
+		if(y+YOffset < ROWS && checkCol < COLS && y+YOffset >=0 && checkCol >=0){
 			if(board[y+YOffset][checkCol] > 0 && piece[i][currentChecked]>0)
 					return true;
-			YOffset++;
+			
+		}
+		YOffset++;
 		}
 		currentChecked--;
 		checkCol--;
@@ -300,8 +387,10 @@ function colidesLeft(piece,x,y)
 		var YOffset=0;
 		for(i = xtop; i<=bottom;i++)
 		{
+			if(y+YOffset < ROWS && checkCol < COLS && y+YOffset >=0 && checkCol >=0){
 			if(board[y+YOffset][checkCol] > 0 && piece[i][currentChecked]>0)
 					return true;
+			}
 			YOffset++;
 		}
 		currentChecked++;
@@ -325,6 +414,7 @@ function colides(piece,x,y)
 		var XOffset=0;
 		for(i = left; i<=right;i++)
 		{
+			
 			if(board[checkRow][x+XOffset] > 0 && piece[currentChecked][i]>0)
 					return true;
 			XOffset++;
@@ -355,6 +445,8 @@ function moveRight()
 }
 function movePiece()
 {
+	if(running)
+	{
 	if((currentY + (findBottom(currentPiece)-findTop(currentPiece) + 1)) < ROWS
 		&& !colides(currentPiece,currentX,currentY))
 	{
@@ -363,25 +455,69 @@ function movePiece()
 	else
 	{
 		addPieceToBoard(currentPiece);
-		currentPiece= getRandomPiece();
-		currentX=Math.floor(COLS/2 - (findBottom(currentPiece)-findTop(currentPiece) + 1)/2);
+		var removedLines = 0;
+		while(hasFullLines())
+		{
+			removeFullLines();
+			removedLines++;
+		}
+		score+= 100*removedLines;
+		document.getElementById('score').innerText = "Score: " + score;
+		currentPiece= nextPiece;
+		nextPiece = copyPiece(getRandomPiece());
+		currentX=Math.floor(COLS/2 - (findRight(currentPiece)-findLeft(currentPiece) + 1)/2);
 		currentY=-((findBottom(currentPiece)-findTop(currentPiece))+1);
 	}
+	}
+	
 	update();
 }
 function update()
 {
 	context.fillStyle=BOARD;
-	context.fillRect(0,0,200,400);
 	drawBoard();
-	drawPiece(currentX,currentY,currentPiece);
+	drawNextPiece();
+	drawPiece(context,currentX,currentY,currentPiece);
 }
-currentPiece= getRandomPiece();
-currentX=Math.floor(COLS/2 - (findBottom(currentPiece)-findTop(currentPiece) + 1)/2);
+function drawNextPiece()
+{
+	var nextCanvas = document.getElementById('next');
+	var nextContext = nextCanvas.getContext('2d');
+	nextContext.fillStyle = "#FFFFFF";
+	nextContext.fillRect(0,0,100,100);
+	nextContext.fillStyle = BOARD;
+	nextContext.globalAlpha = 0.3;
+	nextContext.fillRect(0,0,100,100);
+	nextContext.globalAlpha = 1;
+	for(i=0;i<5;i++)
+		for(j=0;j<5;j++)
+		{
+				nextContext.globalAlpha = 0.3;
+				drawSquare(nextContext,j, i,BORDER,BOARD);
+				nextContext.globalAlpha = 1.0;
+		}
+		var nextX=Math.floor(5/2 - (findRight(nextPiece)-findLeft(nextPiece) + 1)/5);
+		var nextY=Math.floor(5/2 - (findBottom(nextPiece)-findTop(nextPiece) + 1)/5);
+		drawPiece(nextContext,nextX,nextY,nextPiece);
+}
+currentPiece= copyPiece(getRandomPiece());
+nextPiece = copyPiece(getRandomPiece());
+currentX=Math.floor(COLS/2 - (findRight(currentPiece)-findLeft(currentPiece) + 1)/2);
 currentY=-((findBottom(currentPiece)-findTop(currentPiece))+1);
 initBoard();
 drawBoard();
 //addPieceToBoard(currentPiece);
+function rotatePiece()
+{
+	rotateMatrix(currentPiece);
+			var left = findLeft(currentPiece);
+			var right = findRight(currentPiece);
+			var width = right - left +1;
+			if(currentX+width > COLS)
+				currentX=COLS-width-1;
+			if(currentX - width < 0)
+				currentX=0;
+}
 function handle(e)
 {
 	var key = e.keyCode;
@@ -390,14 +526,19 @@ function handle(e)
 		case 37:
 		moveLeft();
 		break;
+		case 38:
+		rotatePiece();
+		break;
 		case 39:
 		moveRight();
 		break;
-		case 40:
-		movePiece();
+		case 40:{
+			
+			movePiece();
+		}
 		break;
 		update();
 	}
 }
 document.addEventListener("keydown", handle, false);
-setInterval(movePiece,500);
+setInterval(movePiece,400);
